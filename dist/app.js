@@ -275,32 +275,25 @@ async function signInWithGoogle() {
     $('#account-error').textContent = '雲端服務尚未連線，請確認網路後再試一次。';
     return;
   }
+  const button = $('#sign-in-google');
+  button.disabled = true;
+  button.lastChild.textContent = '登入中…';
   try {
     const provider = new firebase.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
-    const useRedirect = /iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
-    if (useRedirect) {
-      setSyncState('syncing', '正在前往 Google 登入');
-      await firebase.signInWithRedirect(firebase.auth, provider);
-      return;
-    }
     await firebase.signInWithPopup(firebase.auth, provider);
   } catch (error) {
-    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/operation-not-supported-in-this-environment') {
-      try {
-        const provider = new firebase.GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: 'select_account' });
-        await firebase.signInWithRedirect(firebase.auth, provider);
-        return;
-      } catch (_) {}
-    }
     if (error?.code !== 'auth/popup-closed-by-user') {
       const messages = {
         'auth/unauthorized-domain': '這個網站尚未列入 Firebase 的授權網域。',
-        'auth/network-request-failed': '目前無法連線到 Google，請確認網路後再試一次。'
+        'auth/network-request-failed': '目前無法連線到 Google，請確認網路後再試一次。',
+        'auth/popup-blocked': '登入視窗被阻擋，請允許彈出式視窗後再試一次。'
       };
       $('#account-error').textContent = messages[error?.code] || `登入沒有完成，請稍後再試一次${error?.code ? `（${error.code}）` : '。'}`;
     }
+  } finally {
+    button.disabled = false;
+    button.lastChild.textContent = '使用 Google 登入';
   }
 }
 
@@ -918,5 +911,15 @@ document.addEventListener('visibilitychange', () => {
 });
 
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+  window.addEventListener('load', async () => {
+    try {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (sessionStorage.getItem('food-rhythm-reloaded-v12')) return;
+        sessionStorage.setItem('food-rhythm-reloaded-v12', '1');
+        location.reload();
+      });
+      const registration = await navigator.serviceWorker.register('./sw.js?v=12');
+      await registration.update();
+    } catch (_) {}
+  });
 }
