@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#183c32">
   <meta name="description" content="記錄進食時間、飢餓與飽足感，回顧自己的飲食節奏。">
   <title>食刻・飲食節奏紀錄</title>
@@ -248,7 +248,10 @@
           <div><strong id="account-name"></strong><span id="account-email"></span></div>
         </div>
         <div class="sync-line"><span class="sync-dot" aria-hidden="true"></span><div><strong id="sync-title">雲端已同步</strong><span id="sync-detail">你的紀錄也會保留在這台裝置</span></div></div>
-        <button id="sign-out" class="secondary-btn" type="button">登出</button>
+        <div class="account-actions">
+          <button id="sync-now" class="primary-btn" type="button">立即同步</button>
+          <button id="sign-out" class="secondary-btn" type="button">登出</button>
+        </div>
       </div>
       <p id="account-error" class="form-error account-error" role="alert"></p>
     </div>

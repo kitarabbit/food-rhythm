@@ -24,7 +24,8 @@ html { background: var(--paper); }
 body { margin: 0; min-width: 320px; color: var(--ink); background: var(--paper); }
 button, input, textarea { font: inherit; }
 button { cursor: pointer; }
-button:focus-visible, input:focus-visible, textarea:focus-visible, label:focus-within { outline: 3px solid rgba(53, 102, 131, .28); outline-offset: 2px; }
+button:focus-visible { outline: 2px solid rgba(53, 102, 131, .35); outline-offset: 2px; }
+input:focus, textarea:focus, select:focus { outline: none; box-shadow: none; }
 svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 [hidden] { display: none !important; }
@@ -204,7 +205,8 @@ textarea { min-height: 74px; line-height: 1.45; }
 .sync-line div { display: grid; gap: 3px; }
 .sync-line span { color: var(--muted); font-size: .8rem; }
 .sync-dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: #27835b; }
-.account-state > .secondary-btn { width: 100%; }
+.account-actions { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.account-actions .primary-btn, .account-actions .secondary-btn { width: 100%; }
 .account-error { text-align: center; }
 .toast { position: fixed; left: 50%; bottom: 92px; transform: translate(-50%, 16px); padding: 11px 16px; border-radius: 6px; color: white; background: #26352f; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20; font-size: .85rem; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }

@@ -21,7 +21,8 @@ const state = {
   user: null,
   firebaseReady: false,
   syncState: 'local',
-  unsubscribeCloud: null
+  unsubscribeCloud: null,
+  syncPromise: null
 };
 let firebase = null;
 
@@ -168,6 +169,44 @@ async function uploadEntries(entries) {
   }
 }
 
+function mergeEntries(localEntries, cloudEntries) {
+  const byId = new Map(cloudEntries.map(entry => [entry.id, entry]));
+  localEntries.map(normalizeEntry).forEach(entry => {
+    const cloudEntry = byId.get(entry.id);
+    if (!cloudEntry || entryTimestamp(entry) >= entryTimestamp(cloudEntry)) byId.set(entry.id, entry);
+  });
+  return [...byId.values()];
+}
+
+async function syncAllNow({ announce = false } = {}) {
+  if (!state.user || !firebase) return;
+  if (state.syncPromise) return state.syncPromise;
+  state.syncPromise = (async () => {
+    setSyncState('syncing', '正在核對這台裝置與雲端的紀錄');
+    try {
+      const snapshot = await firebase.getDocs(cloudEntriesCollection());
+      const cloudEntries = snapshot.docs.map(item => normalizeEntry({ id: item.id, ...item.data() }));
+      const previousOwner = localStorage.getItem(OWNER_KEY);
+      const merged = previousOwner && previousOwner !== state.user.uid
+        ? cloudEntries
+        : mergeEntries(state.entries, cloudEntries);
+      state.entries = merged;
+      localStorage.setItem(OWNER_KEY, state.user.uid);
+      saveEntries({ quiet: true });
+      renderAll();
+      await uploadEntries(merged);
+      setSyncState('synced');
+      if (announce) toast(`同步完成，共 ${merged.length} 筆紀錄`);
+    } catch (error) {
+      setSyncState('error');
+      if (announce) toast('同步未完成，請確認網路後再試一次');
+    } finally {
+      state.syncPromise = null;
+    }
+  })();
+  return state.syncPromise;
+}
+
 async function connectCloud(user) {
   state.unsubscribeCloud?.();
   state.unsubscribeCloud = null;
@@ -187,25 +226,7 @@ async function connectCloud(user) {
   }
   setSyncState('syncing', '正在合併這台裝置與雲端的紀錄');
   try {
-    const snapshot = await firebase.getDocs(cloudEntriesCollection(user.uid));
-    const cloudEntries = snapshot.docs.map(item => normalizeEntry({ id: item.id, ...item.data() }));
-    const previousOwner = localStorage.getItem(OWNER_KEY);
-    let merged;
-    if (previousOwner && previousOwner !== user.uid) {
-      merged = cloudEntries;
-    } else {
-      const byId = new Map(cloudEntries.map(entry => [entry.id, entry]));
-      state.entries.map(normalizeEntry).forEach(entry => {
-        const cloudEntry = byId.get(entry.id);
-        if (!cloudEntry || entryTimestamp(entry) >= entryTimestamp(cloudEntry)) byId.set(entry.id, entry);
-      });
-      merged = [...byId.values()];
-    }
-    state.entries = merged;
-    localStorage.setItem(OWNER_KEY, user.uid);
-    saveEntries({ quiet: true });
-    renderAll();
-    await uploadEntries(merged);
+    await syncAllNow();
     state.unsubscribeCloud = firebase.onSnapshot(cloudEntriesCollection(user.uid), nextSnapshot => {
       state.entries = nextSnapshot.docs.map(item => normalizeEntry({ id: item.id, ...item.data() }));
       saveEntries({ quiet: true });
@@ -868,6 +889,7 @@ function bindEvents() {
     $('#account-dialog').showModal();
   });
   $('#sign-in-google').addEventListener('click', signInWithGoogle);
+  $('#sync-now').addEventListener('click', () => void syncAllNow({ announce: true }));
   $('#sign-out').addEventListener('click', signOutAccount);
   $('#export-data').addEventListener('click', exportData);
   $('#export-csv').addEventListener('click', exportCsv);
@@ -889,6 +911,11 @@ renderAll();
 switchView('today');
 registerWebMcp();
 void initializeFirebase();
+
+window.addEventListener('online', () => void syncAllNow());
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') void syncAllNow();
+});
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
