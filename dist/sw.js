@@ -1,4 +1,4 @@
-const CACHE_NAME = 'food-rhythm-v9';
+const CACHE_NAME = 'food-rhythm-v10';
 const APP_SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest', './icons/app-icon.svg'];
 
 self.addEventListener('install', event => {

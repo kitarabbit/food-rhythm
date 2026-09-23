@@ -2,7 +2,7 @@ const STORAGE_KEY = 'food-rhythm-entries-v1';
 const OWNER_KEY = 'food-rhythm-owner-uid-v1';
 const FIREBASE_VERSION = '11.10.0';
 const firebaseConfig = {
-  apiKey: 'AIzaSyBiIZKLeIRtx9xGj36MAr4RNPKPC6GW_Ac',
+  apiKey: 'AIzaSyBifZKlEiRtx9xGj36MAr4RNPkPC6GW_Ac',
   authDomain: 'food-rhythm.firebaseapp.com',
   projectId: 'food-rhythm',
   storageBucket: 'food-rhythm.firebasestorage.app',
