@@ -51,7 +51,7 @@ h2 { margin: 0; font-size: 1.08rem; line-height: 1.35; }
 h3 { margin: 0; font-size: 1rem; }
 .muted { color: var(--muted); font-size: .85rem; }
 .date-controls, .week-switcher { display: flex; align-items: center; gap: 4px; }
-.date-picker-wrap input { width: 144px; min-height: 42px; border: 1px solid var(--line); border-radius: 6px; padding: 0 10px; color: var(--ink); background: var(--surface); }
+.date-picker-wrap input { width: 168px; min-height: 42px; border: 1px solid var(--line); border-radius: 6px; padding: 0 8px; color: var(--ink); background: var(--surface); white-space: nowrap; }
 
 .day-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--line); margin-bottom: 32px; }
 .summary-cell { min-height: 86px; padding: 17px 18px; background: var(--surface); }
@@ -188,23 +188,24 @@ textarea { min-height: 74px; line-height: 1.45; }
   .primary-pane { padding: 30px 24px 42px; }
   .storage-status { display: none; }
   .app-header { padding: 0 24px; }
-  .fab { right: 20px; bottom: 88px; width: 54px; height: 54px; min-height: 54px; padding: 0; border-radius: 50%; justify-content: center; }
+  .fab { right: 20px; bottom: calc(76px + env(safe-area-inset-bottom)); width: 54px; height: 54px; min-height: 54px; padding: 0; border-radius: 50%; justify-content: center; }
   .fab span { display: none; }
-  .bottom-nav { left: 0; right: 0; bottom: 0; transform: none; width: 100%; height: 72px; justify-content: space-around; gap: 0; padding: 5px max(8px, env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left)); border-width: 1px 0 0; border-radius: 0; }
-  .nav-item { min-width: 82px; height: 55px; flex-direction: column; gap: 2px; }
-  .nav-item.active { color: var(--deep); background: var(--mint); }
-  .app-shell { padding-bottom: 76px; }
-  .toast { bottom: 84px; }
+  .bottom-nav { left: 0; right: 0; bottom: 0; transform: none; width: 100%; height: calc(64px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); border-width: 1px 0 0; border-radius: 0; }
+  .nav-item { width: 100%; min-width: 0; height: 63px; border-radius: 0; flex-direction: column; gap: 2px; }
+  .nav-item.active { color: var(--deep); background: transparent; box-shadow: inset 0 3px 0 var(--deep); }
+  .app-shell { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  .toast { bottom: calc(74px + env(safe-area-inset-bottom)); }
 }
 
 @media (max-width: 520px) {
   .app-header { height: 62px; padding: 0 17px; }
   .primary-pane { padding: 24px 17px 38px; }
-  .view-heading { align-items: start; margin-bottom: 24px; }
-  .view-heading h1 { font-size: 1.68rem; }
-  .date-controls { margin-top: -5px; }
+  .view-heading { display: grid; grid-template-columns: minmax(0, 1fr) 184px; align-items: start; gap: 10px; margin-bottom: 24px; }
+  .view-heading h1 { font-size: 1.48rem; }
+  .date-controls { width: 184px; margin-top: -5px; }
   .date-controls .icon-btn { display: none; }
-  .date-picker-wrap input { width: 128px; }
+  .date-picker-wrap, .date-picker-wrap input { width: 184px; }
+  .date-picker-wrap input { font-size: 1rem; }
   .day-summary { grid-template-columns: 1fr; }
   .summary-cell { min-height: 66px; display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; }
   .summary-cell span { margin: 0; }
