@@ -1,0 +1,19 @@
+{
+  "name": "食刻・飲食節奏紀錄",
+  "short_name": "食刻",
+  "description": "記錄進食時間、飢餓與飽足感，回顧自己的飲食節奏。",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7f4",
+  "theme_color": "#183c32",
+  "icons": [
+    {
+      "src": "icons/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

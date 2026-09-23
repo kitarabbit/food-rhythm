@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#183c32">
+  <meta name="description" content="記錄進食時間、飢餓與飽足感，回顧自己的飲食節奏。">
+  <title>食刻・飲食節奏紀錄</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="icons/app-icon.svg">
+  <link rel="apple-touch-icon" href="icons/app-icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <a class="brand" href="#today" aria-label="食刻首頁">
+        <span class="brand-mark" aria-hidden="true"><span></span></span>
+        <span>食刻</span>
+      </a>
+      <div class="header-actions">
+        <span id="storage-status" class="storage-status">已儲存在這台裝置</span>
+        <button id="open-data" class="icon-btn" type="button" aria-label="資料與備份" title="資料與備份">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0 4 4m-4-4L8 7M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="workspace" aria-label="飲食紀錄">
+        <div class="primary-pane">
+          <div class="view-heading">
+            <div>
+              <p id="view-eyebrow" class="eyebrow">今天</p>
+              <h1 id="view-title">我的飲食節奏</h1>
+            </div>
+            <div class="date-controls" id="date-controls">
+              <button id="previous-day" class="icon-btn" type="button" aria-label="前一天" title="前一天">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <label class="date-picker-wrap">
+                <span class="sr-only">選擇日期</span>
+                <input id="selected-date" type="date">
+              </label>
+              <button id="next-day" class="icon-btn" type="button" aria-label="後一天" title="後一天">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="today-view" class="app-view">
+            <div id="day-summary" class="day-summary" aria-live="polite"></div>
+            <div class="section-title-row">
+              <h2>時間軸</h2>
+              <span id="entry-count" class="muted"></span>
+            </div>
+            <div id="timeline" class="timeline"></div>
+          </div>
+
+          <div id="history-view" class="app-view" hidden>
+            <div id="history-list" class="history-list"></div>
+          </div>
+
+          <div id="weekly-view" class="app-view" hidden>
+            <div class="review-tabs" role="tablist" aria-label="回顧週期">
+              <button class="review-tab active" type="button" data-period="week" role="tab" aria-selected="true">週回顧</button>
+              <button class="review-tab" type="button" data-period="month" role="tab" aria-selected="false">月回顧</button>
+            </div>
+            <div id="week-switcher" class="week-switcher">
+              <button id="previous-week" class="icon-btn" type="button" aria-label="前一週" title="前一週">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <strong id="week-range"></strong>
+              <button id="next-week" class="icon-btn" type="button" aria-label="後一週" title="後一週">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div id="month-switcher" class="week-switcher" hidden>
+              <button id="previous-month" class="icon-btn" type="button" aria-label="前一月" title="前一月">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+              </button>
+              <strong id="month-range"></strong>
+              <button id="next-month" class="icon-btn" type="button" aria-label="後一月" title="後一月">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+              </button>
+            </div>
+            <div id="weekly-content"></div>
+            <div id="monthly-content" hidden></div>
+          </div>
+        </div>
+
+        <aside class="insight-pane" aria-label="本週摘要">
+          <div class="insight-heading">
+            <p class="eyebrow">這一週</p>
+            <h2>先觀察，不評分</h2>
+          </div>
+          <div id="side-summary"></div>
+          <blockquote id="side-insight">持續記錄幾天後，這裡會整理你容易感到飢餓的時段。</blockquote>
+        </aside>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="主要功能">
+      <button class="nav-item active" type="button" data-view="today" aria-current="page">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span>今天</span>
+      </button>
+      <button class="nav-item" type="button" data-view="history">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        <span>紀錄</span>
+      </button>
+      <button class="nav-item" type="button" data-view="weekly">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7"/></svg>
+        <span>回顧</span>
+      </button>
+    </nav>
+
+    <button id="add-entry" class="fab" type="button" aria-label="新增紀錄">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      <span>記一筆</span>
+    </button>
+  </div>
+
+  <dialog id="entry-dialog" class="sheet-dialog">
+    <form id="entry-form" method="dialog" class="sheet">
+      <div class="sheet-grabber" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <div><p class="eyebrow">當下記下來</p><h2 id="entry-dialog-title">新增紀錄</h2></div>
+        <button class="icon-btn close-dialog" type="button" aria-label="關閉" title="關閉">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+
+      <input id="entry-id" type="hidden">
+      <fieldset class="type-switch">
+        <legend>紀錄類型</legend>
+        <label><input type="radio" name="type" value="food" checked><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8m3-8v8M5 7h7M8.5 11v10M17 3v18m0-18c2 2 3 5 3 8h-3"/></svg>吃了東西</span></label>
+        <label><input type="radio" name="type" value="hunger"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14a8 8 0 1 1 16 0M12 14l4-4M6 18h12"/></svg>飢餓感</span></label>
+        <label><input type="radio" name="type" value="fullness"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 14a8 8 0 1 1 16 0M12 14l-3-3M6 18h12"/></svg>飽足感</span></label>
+      </fieldset>
+
+      <div class="form-grid">
+        <label>日期<input id="entry-date" name="date" type="date" required></label>
+        <label>時間<input id="entry-time" name="time" type="time" required></label>
+      </div>
+
+      <div id="food-fields">
+        <label>吃了什麼<input id="food-text" name="food" type="text" maxlength="120" placeholder="例如：飯糰、無糖豆漿"></label>
+      </div>
+
+      <div id="hunger-fields" hidden>
+        <fieldset class="feeling-scale hunger-scale">
+          <legend>現在有多餓？</legend>
+          <div class="scale-options">
+            <label><input type="radio" name="hunger-level" value="1" checked><span>1<small>微餓</small></span></label>
+            <label><input type="radio" name="hunger-level" value="2"><span>2<small>有點餓</small></span></label>
+            <label><input type="radio" name="hunger-level" value="3"><span>3<small>餓</small></span></label>
+            <label><input type="radio" name="hunger-level" value="4"><span>4<small>很餓</small></span></label>
+            <label><input type="radio" name="hunger-level" value="5"><span>5<small>極餓</small></span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <div id="fullness-fields" hidden>
+        <fieldset class="feeling-scale fullness-scale">
+          <legend>現在有多飽？</legend>
+          <div class="scale-options">
+            <label><input type="radio" name="fullness-level" value="1" checked><span>1<small>微飽</small></span></label>
+            <label><input type="radio" name="fullness-level" value="2"><span>2<small>有點飽</small></span></label>
+            <label><input type="radio" name="fullness-level" value="3"><span>3<small>飽足</small></span></label>
+            <label><input type="radio" name="fullness-level" value="4"><span>4<small>很飽</small></span></label>
+            <label><input type="radio" name="fullness-level" value="5"><span>5<small>過飽</small></span></label>
+          </div>
+        </fieldset>
+      </div>
+
+      <label>補充（選填）<textarea id="entry-note" name="note" rows="2" maxlength="240" placeholder="份量、情境，或身體的感覺"></textarea></label>
+      <p id="form-error" class="form-error" role="alert"></p>
+      <div class="sheet-actions">
+        <button id="delete-entry" class="text-danger" type="button" hidden>刪除</button>
+        <button class="primary-btn" type="submit">儲存紀錄</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="data-dialog" class="modal-dialog">
+    <div class="modal-card">
+      <div class="sheet-header">
+        <div><p class="eyebrow">只存在瀏覽器裡</p><h2>資料與備份</h2></div>
+        <button class="icon-btn close-dialog" type="button" aria-label="關閉" title="關閉">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <section class="data-section">
+        <h3>備份與還原</h3>
+        <p class="modal-copy">完整保留所有欄位，適合換裝置或避免資料遺失。</p>
+        <div class="data-actions data-actions-inline">
+          <button id="export-data" class="secondary-btn" type="button">匯出 JSON 備份</button>
+          <label class="secondary-btn file-label">匯入 JSON<input id="import-data" type="file" accept="application/json"></label>
+        </div>
+      </section>
+      <section class="data-section analysis-export">
+        <h3>匯出分析資料</h3>
+        <p class="modal-copy">選擇一段時間，匯出試算表或可直接提供給 AI 的文字報告。</p>
+        <div class="form-grid export-range">
+          <label>開始日期<input id="export-start" type="date"></label>
+          <label>結束日期<input id="export-end" type="date"></label>
+        </div>
+        <label class="privacy-option"><input id="exclude-notes" type="checkbox"><span>排除補充備註</span></label>
+        <p id="export-count" class="export-count" aria-live="polite"></p>
+        <div class="data-actions data-actions-inline">
+          <button id="export-csv" class="secondary-btn" type="button">匯出 CSV</button>
+          <button id="export-markdown" class="primary-btn" type="button">匯出 AI 分析報告</button>
+        </div>
+      </section>
+      <section class="danger-zone">
+        <button id="clear-data" class="text-danger" type="button">清除所有紀錄</button>
+      </section>
+    </div>
+  </dialog>
+
+  <template id="empty-template">
+    <div class="empty-state">
+      <span class="empty-mark" aria-hidden="true"></span>
+      <h3>這天還沒有紀錄</h3>
+      <p>不用補得很完整，從現在這一刻開始就好。</p>
+      <button class="secondary-btn empty-add" type="button">新增第一筆</button>
+    </div>
+  </template>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js" defer></script>
+</body>
+</html>
