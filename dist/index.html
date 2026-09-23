@@ -20,6 +20,10 @@
       </a>
       <div class="header-actions">
         <span id="storage-status" class="storage-status">已儲存在這台裝置</span>
+        <button id="open-account" class="account-btn" type="button" aria-label="登入與雲端同步" title="登入與雲端同步">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18h10a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.3 8.2 4.5 4.5 0 0 0 7 18Z"/><path d="m9 14 3-3 3 3m-3-3v7"/></svg>
+          <span id="account-label">登入同步</span>
+        </button>
         <button id="open-data" class="icon-btn" type="button" aria-label="資料與備份" title="資料與備份">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0 4 4m-4-4L8 7M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
         </button>
@@ -216,6 +220,37 @@
       <section class="danger-zone">
         <button id="clear-data" class="text-danger" type="button">清除所有紀錄</button>
       </section>
+    </div>
+  </dialog>
+
+  <dialog id="account-dialog" class="modal-dialog">
+    <div class="modal-card account-card">
+      <div class="sheet-header">
+        <div><p class="eyebrow">跨裝置保存</p><h2>帳號與同步</h2></div>
+        <button class="icon-btn close-dialog" type="button" aria-label="關閉" title="關閉">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>
+        </button>
+      </div>
+      <div id="account-loading" class="account-state">
+        <span class="sync-spinner" aria-hidden="true"></span>
+        <p>正在確認同步狀態…</p>
+      </div>
+      <div id="account-signed-out" class="account-state" hidden>
+        <span class="account-cloud" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 18h10a4 4 0 0 0 .7-7.94A6 6 0 0 0 6.3 8.2 4.5 4.5 0 0 0 7 18Z"/><path d="m9 14 3-3 3 3m-3-3v7"/></svg></span>
+        <h3>把紀錄安全留在自己的帳號</h3>
+        <p class="modal-copy">登入後，這台裝置現有的紀錄會合併到雲端，之後可在手機與電腦查看同一份資料。</p>
+        <button id="sign-in-google" class="primary-btn google-btn" type="button"><span class="google-mark">G</span>使用 Google 登入</button>
+      </div>
+      <div id="account-signed-in" class="account-state" hidden>
+        <div class="account-person">
+          <img id="account-avatar" alt="" hidden>
+          <span id="account-initial" class="account-initial" aria-hidden="true"></span>
+          <div><strong id="account-name"></strong><span id="account-email"></span></div>
+        </div>
+        <div class="sync-line"><span class="sync-dot" aria-hidden="true"></span><div><strong id="sync-title">雲端已同步</strong><span id="sync-detail">你的紀錄也會保留在這台裝置</span></div></div>
+        <button id="sign-out" class="secondary-btn" type="button">登出</button>
+      </div>
+      <p id="account-error" class="form-error account-error" role="alert"></p>
     </div>
   </dialog>
 

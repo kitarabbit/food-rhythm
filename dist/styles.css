@@ -36,6 +36,10 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 .brand-mark span { width: 9px; height: 13px; border: solid var(--mint-2); border-width: 0 2px 2px 0; transform: rotate(38deg) translate(-1px, 1px); }
 .header-actions { display: flex; align-items: center; gap: 10px; }
 .storage-status { color: var(--muted); font-size: .78rem; }
+.account-btn { min-height: 40px; display: flex; align-items: center; gap: 7px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; color: var(--deep); background: var(--surface); font-weight: 650; font-size: .82rem; }
+.account-btn:hover { border-color: #aebbb4; background: #edf3ef; }
+.account-btn svg { width: 18px; height: 18px; }
+.account-btn.is-synced { color: var(--deep); background: var(--mint); border-color: var(--mint-2); }
 .icon-btn { width: 42px; height: 42px; padding: 0; border: 0; border-radius: 50%; display: grid; place-items: center; color: var(--ink); background: transparent; }
 .icon-btn:hover { background: #e8ede9; }
 
@@ -180,6 +184,28 @@ textarea { min-height: 74px; line-height: 1.45; }
 .danger-zone { padding-top: 12px; border-top: 1px solid var(--line); }
 .file-label { cursor: pointer; }
 .file-label input { display: none; }
+.account-card { min-height: 330px; }
+.account-state { display: grid; justify-items: center; text-align: center; padding: 16px 10px 4px; }
+.account-state h3 { margin: 14px 0 8px; }
+.account-state .modal-copy { max-width: 420px; }
+.account-cloud { width: 58px; height: 58px; display: grid; place-items: center; border-radius: 50%; color: var(--deep); background: var(--mint); }
+.account-cloud svg { width: 28px; height: 28px; }
+.google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.google-mark { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; color: #356683; background: white; font-weight: 800; }
+.sync-spinner { width: 30px; height: 30px; margin: 44px 0 12px; border: 3px solid var(--line); border-top-color: var(--deep); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.account-person { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px; text-align: left; border: 1px solid var(--line); border-radius: 8px; }
+.account-person img, .account-initial { width: 44px; height: 44px; flex: 0 0 44px; border-radius: 50%; }
+.account-person img { object-fit: cover; }
+.account-initial { display: grid; place-items: center; color: white; background: var(--deep); font-weight: 750; }
+.account-person div { min-width: 0; display: grid; gap: 3px; }
+.account-person span:not(.account-initial) { color: var(--muted); font-size: .8rem; overflow: hidden; text-overflow: ellipsis; }
+.sync-line { width: 100%; display: flex; align-items: center; gap: 12px; margin: 12px 0 20px; padding: 14px; text-align: left; background: #eef5f1; border-radius: 8px; }
+.sync-line div { display: grid; gap: 3px; }
+.sync-line span { color: var(--muted); font-size: .8rem; }
+.sync-dot { width: 9px; height: 9px; flex: 0 0 9px; border-radius: 50%; background: #27835b; }
+.account-state > .secondary-btn { width: 100%; }
+.account-error { text-align: center; }
 .toast { position: fixed; left: 50%; bottom: 92px; transform: translate(-50%, 16px); padding: 11px 16px; border-radius: 6px; color: white; background: #26352f; box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 20; font-size: .85rem; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
@@ -201,6 +227,9 @@ textarea { min-height: 74px; line-height: 1.45; }
 @media (max-width: 520px) {
   .app-header { height: 62px; padding: 0 17px; }
   .primary-pane { padding: 24px 17px 38px; }
+  .account-btn { width: 42px; height: 42px; min-height: 42px; padding: 0; justify-content: center; border: 0; border-radius: 50%; background: transparent; }
+  .account-btn span { display: none; }
+  .account-btn.is-synced { background: var(--mint); }
   .view-heading { display: grid; grid-template-columns: minmax(0, 1fr) 184px; align-items: start; gap: 10px; margin-bottom: 24px; }
   .view-heading h1 { font-size: 1.48rem; }
   .date-controls { width: 184px; margin-top: -5px; }

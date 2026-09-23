@@ -1,4 +1,14 @@
 const STORAGE_KEY = 'food-rhythm-entries-v1';
+const OWNER_KEY = 'food-rhythm-owner-uid-v1';
+const FIREBASE_VERSION = '11.10.0';
+const firebaseConfig = {
+  apiKey: 'AIzaSyBiIZKLeIRtx9xGj36MAr4RNPKPC6GW_Ac',
+  authDomain: 'food-rhythm.firebaseapp.com',
+  projectId: 'food-rhythm',
+  storageBucket: 'food-rhythm.firebasestorage.app',
+  messagingSenderId: '306076543105',
+  appId: '1:306076543105:web:22722669358f46cd6d8580'
+};
 const hungerLabels = { 1: '微餓', 2: '有點餓', 3: '感到餓', 4: '很餓', 5: '極度飢餓' };
 const fullnessLabels = { 1: '微飽', 2: '有點飽', 3: '飽足', 4: '很飽', 5: '過度飽足' };
 const state = {
@@ -7,8 +17,13 @@ const state = {
   weekAnchor: new Date(),
   monthAnchor: new Date(),
   reviewPeriod: 'week',
-  view: 'today'
+  view: 'today',
+  user: null,
+  firebaseReady: false,
+  syncState: 'local',
+  unsubscribeCloud: null
 };
+let firebase = null;
 
 const $ = (selector, root = document) => root.querySelector(selector);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -68,10 +83,194 @@ function migrateEntries(entries) {
   return migrated;
 }
 
-function saveEntries() {
+function saveEntries({ quiet = false } = {}) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.entries));
-  $('#storage-status').textContent = '剛剛已儲存';
-  setTimeout(() => { $('#storage-status').textContent = '已儲存在這台裝置'; }, 1400);
+  if (quiet) return;
+  setStorageStatus(state.user ? '正在同步…' : '剛剛已儲存');
+  if (!state.user) setTimeout(() => setStorageStatus('已儲存在這台裝置'), 1400);
+}
+
+function setStorageStatus(message) {
+  $('#storage-status').textContent = message;
+}
+
+function setSyncState(status, detail = '') {
+  state.syncState = status;
+  const signedIn = Boolean(state.user);
+  $('#open-account').classList.toggle('is-synced', signedIn && status === 'synced');
+  $('#account-label').textContent = signedIn ? (status === 'syncing' ? '同步中' : '已同步') : '登入同步';
+  if (signedIn) setStorageStatus(status === 'syncing' ? '正在同步…' : status === 'error' ? '同步暫停' : '已同步到雲端');
+  const title = $('#sync-title');
+  const text = $('#sync-detail');
+  if (!title || !text) return;
+  title.textContent = status === 'syncing' ? '正在同步' : status === 'error' ? '目前無法同步' : '雲端已同步';
+  text.textContent = detail || (status === 'error' ? '紀錄仍已保存在這台裝置，連線後可再同步' : '你的紀錄也會保留在這台裝置');
+}
+
+function showAccountState(name) {
+  $('#account-loading').hidden = name !== 'loading';
+  $('#account-signed-out').hidden = name !== 'signed-out';
+  $('#account-signed-in').hidden = name !== 'signed-in';
+}
+
+function cloudEntriesCollection(uid = state.user?.uid) {
+  return firebase.collection(firebase.db, 'users', uid, 'entries');
+}
+
+function entryTimestamp(entry) {
+  return Number(entry.updatedAt || entry.createdAt || 0);
+}
+
+function normalizeEntry(entry) {
+  return {
+    id: String(entry.id),
+    date: String(entry.date),
+    time: String(entry.time),
+    type: entry.type,
+    food: String(entry.food || ''),
+    level: entry.level == null ? null : Number(entry.level),
+    note: String(entry.note || ''),
+    createdAt: Number(entry.createdAt || Date.now()),
+    updatedAt: Number(entry.updatedAt || entry.createdAt || Date.now())
+  };
+}
+
+async function syncRecord(entry) {
+  if (!state.user || !firebase) return;
+  setSyncState('syncing');
+  try {
+    await firebase.setDoc(firebase.doc(firebase.db, 'users', state.user.uid, 'entries', entry.id), normalizeEntry(entry));
+    setSyncState('synced');
+  } catch (_) {
+    setSyncState('error');
+  }
+}
+
+async function deleteCloudRecord(id) {
+  if (!state.user || !firebase) return;
+  setSyncState('syncing');
+  try {
+    await firebase.deleteDoc(firebase.doc(firebase.db, 'users', state.user.uid, 'entries', id));
+    setSyncState('synced');
+  } catch (_) {
+    setSyncState('error');
+  }
+}
+
+async function uploadEntries(entries) {
+  if (!state.user || !firebase || !entries.length) return;
+  for (let offset = 0; offset < entries.length; offset += 400) {
+    const batch = firebase.writeBatch(firebase.db);
+    entries.slice(offset, offset + 400).forEach(entry => {
+      batch.set(firebase.doc(firebase.db, 'users', state.user.uid, 'entries', entry.id), normalizeEntry(entry));
+    });
+    await batch.commit();
+  }
+}
+
+async function connectCloud(user) {
+  state.unsubscribeCloud?.();
+  state.unsubscribeCloud = null;
+  state.user = user;
+  showAccountState('signed-in');
+  $('#account-name').textContent = user.displayName || 'Google 使用者';
+  $('#account-email').textContent = user.email || '';
+  $('#account-initial').textContent = (user.displayName || user.email || '食').slice(0, 1).toUpperCase();
+  const avatar = $('#account-avatar');
+  if (user.photoURL) {
+    avatar.src = user.photoURL;
+    avatar.hidden = false;
+    $('#account-initial').hidden = true;
+  } else {
+    avatar.hidden = true;
+    $('#account-initial').hidden = false;
+  }
+  setSyncState('syncing', '正在合併這台裝置與雲端的紀錄');
+  try {
+    const snapshot = await firebase.getDocs(cloudEntriesCollection(user.uid));
+    const cloudEntries = snapshot.docs.map(item => normalizeEntry({ id: item.id, ...item.data() }));
+    const previousOwner = localStorage.getItem(OWNER_KEY);
+    let merged;
+    if (previousOwner && previousOwner !== user.uid) {
+      merged = cloudEntries;
+    } else {
+      const byId = new Map(cloudEntries.map(entry => [entry.id, entry]));
+      state.entries.map(normalizeEntry).forEach(entry => {
+        const cloudEntry = byId.get(entry.id);
+        if (!cloudEntry || entryTimestamp(entry) >= entryTimestamp(cloudEntry)) byId.set(entry.id, entry);
+      });
+      merged = [...byId.values()];
+    }
+    state.entries = merged;
+    localStorage.setItem(OWNER_KEY, user.uid);
+    saveEntries({ quiet: true });
+    renderAll();
+    await uploadEntries(merged);
+    state.unsubscribeCloud = firebase.onSnapshot(cloudEntriesCollection(user.uid), nextSnapshot => {
+      state.entries = nextSnapshot.docs.map(item => normalizeEntry({ id: item.id, ...item.data() }));
+      saveEntries({ quiet: true });
+      renderAll();
+      setSyncState('synced');
+    }, () => setSyncState('error'));
+    setSyncState('synced');
+  } catch (_) {
+    setSyncState('error');
+  }
+}
+
+async function initializeFirebase() {
+  try {
+    const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+    const [appModule, authModule, firestoreModule] = await Promise.all([
+      import(`${base}/firebase-app.js`),
+      import(`${base}/firebase-auth.js`),
+      import(`${base}/firebase-firestore.js`)
+    ]);
+    const app = appModule.initializeApp(firebaseConfig);
+    firebase = { ...authModule, ...firestoreModule, auth: authModule.getAuth(app), db: firestoreModule.getFirestore(app) };
+    state.firebaseReady = true;
+    authModule.onAuthStateChanged(firebase.auth, user => {
+      if (user) connectCloud(user);
+      else {
+        state.unsubscribeCloud?.();
+        state.unsubscribeCloud = null;
+        state.user = null;
+        showAccountState('signed-out');
+        setSyncState('local');
+        setStorageStatus('已儲存在這台裝置');
+      }
+    });
+  } catch (_) {
+    state.firebaseReady = false;
+    showAccountState('signed-out');
+    $('#account-error').textContent = '目前無法連接雲端，仍可繼續使用本機紀錄。';
+  }
+}
+
+async function signInWithGoogle() {
+  $('#account-error').textContent = '';
+  if (!firebase) {
+    $('#account-error').textContent = '雲端服務尚未連線，請確認網路後再試一次。';
+    return;
+  }
+  try {
+    const provider = new firebase.GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    await firebase.signInWithPopup(firebase.auth, provider);
+  } catch (error) {
+    if (error?.code !== 'auth/popup-closed-by-user') $('#account-error').textContent = '登入沒有完成，請稍後再試一次。';
+  }
+}
+
+async function signOutAccount() {
+  if (!firebase) return;
+  try {
+    await firebase.signOut(firebase.auth);
+    $('#account-dialog').close();
+    toast('已登出，紀錄仍保留在這台裝置');
+  } catch (_) {
+    $('#account-error').textContent = '暫時無法登出，請稍後再試一次。';
+  }
 }
 
 function sortEntries(entries) {
@@ -398,12 +597,14 @@ function submitEntry(event) {
     food: type === 'food' ? food : '',
     level: type === 'hunger' ? Number($('input[name="hunger-level"]:checked').value) : type === 'fullness' ? Number($('input[name="fullness-level"]:checked').value) : null,
     note: $('#entry-note').value.trim(),
-    createdAt: id ? state.entries.find(item => item.id === id)?.createdAt || Date.now() : Date.now()
+    createdAt: id ? state.entries.find(item => item.id === id)?.createdAt || Date.now() : Date.now(),
+    updatedAt: Date.now()
   };
   if (id) state.entries = state.entries.map(entry => entry.id === id ? record : entry);
   else state.entries.push(record);
   state.selectedDate = record.date;
   saveEntries();
+  void syncRecord(record);
   renderAll();
   switchView('today');
   $('#entry-dialog').close();
@@ -415,6 +616,7 @@ function deleteEntry() {
   if (!id || !confirm('確定要刪除這筆紀錄嗎？')) return;
   state.entries = state.entries.filter(entry => entry.id !== id);
   saveEntries();
+  void deleteCloudRecord(id);
   renderAll();
   $('#entry-dialog').close();
   toast('紀錄已刪除');
@@ -544,6 +746,10 @@ async function importData(event) {
     state.entries = migrateEntries(entries);
     saveEntries();
     renderAll();
+    if (state.user) {
+      setSyncState('syncing');
+      uploadEntries(state.entries).then(() => setSyncState('synced')).catch(() => setSyncState('error'));
+    }
     $('#data-dialog').close();
     toast(`已匯入 ${entries.length} 筆紀錄`);
   } catch (_) {
@@ -553,12 +759,26 @@ async function importData(event) {
   }
 }
 
-function clearData() {
+async function clearData() {
   if (!confirm('確定要清除所有紀錄嗎？這個動作無法復原，建議先匯出備份。')) return;
   state.entries = [];
   saveEntries();
   renderAll();
   $('#data-dialog').close();
+  if (state.user && firebase) {
+    setSyncState('syncing');
+    try {
+      const snapshot = await firebase.getDocs(cloudEntriesCollection());
+      for (let offset = 0; offset < snapshot.docs.length; offset += 400) {
+        const batch = firebase.writeBatch(firebase.db);
+        snapshot.docs.slice(offset, offset + 400).forEach(item => batch.delete(item.ref));
+        await batch.commit();
+      }
+      setSyncState('synced');
+    } catch (_) {
+      setSyncState('error');
+    }
+  }
   toast('所有紀錄已清除');
 }
 
@@ -580,9 +800,11 @@ function registerWebMcp() {
   const addEntry = async input => {
     if (!input || !input.date || !input.time || !['food', 'hunger', 'fullness'].includes(input.type)) throw new Error('日期、時間與類型都是必填');
     if (input.type === 'food' && !String(input.food || '').trim()) throw new Error('進食紀錄需要食物內容');
-    const entry = { id: crypto.randomUUID(), date: input.date, time: input.time, type: input.type, food: input.type === 'food' ? String(input.food).trim() : '', level: input.type === 'food' ? null : Number(input.level || 3), note: String(input.note || '').trim(), createdAt: Date.now() };
+    const now = Date.now();
+    const entry = { id: crypto.randomUUID(), date: input.date, time: input.time, type: input.type, food: input.type === 'food' ? String(input.food).trim() : '', level: input.type === 'food' ? null : Number(input.level || 3), note: String(input.note || '').trim(), createdAt: now, updatedAt: now };
     state.entries.push(entry);
     saveEntries();
+    void syncRecord(entry);
     renderAll();
     return { id: entry.id, saved: true };
   };
@@ -619,6 +841,13 @@ function bindEvents() {
     updateExportCount();
     $('#data-dialog').showModal();
   });
+  $('#open-account').addEventListener('click', () => {
+    $('#account-error').textContent = '';
+    showAccountState(state.user ? 'signed-in' : 'signed-out');
+    $('#account-dialog').showModal();
+  });
+  $('#sign-in-google').addEventListener('click', signInWithGoogle);
+  $('#sign-out').addEventListener('click', signOutAccount);
   $('#export-data').addEventListener('click', exportData);
   $('#export-csv').addEventListener('click', exportCsv);
   $('#export-markdown').addEventListener('click', exportMarkdown);
@@ -638,6 +867,7 @@ bindEvents();
 renderAll();
 switchView('today');
 registerWebMcp();
+void initializeFirebase();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
