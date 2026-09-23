@@ -228,6 +228,7 @@ async function initializeFirebase() {
     ]);
     const app = appModule.initializeApp(firebaseConfig);
     firebase = { ...authModule, ...firestoreModule, auth: authModule.getAuth(app), db: firestoreModule.getFirestore(app) };
+    await authModule.setPersistence(firebase.auth, authModule.browserLocalPersistence);
     state.firebaseReady = true;
     authModule.onAuthStateChanged(firebase.auth, user => {
       if (user) connectCloud(user);
@@ -256,9 +257,29 @@ async function signInWithGoogle() {
   try {
     const provider = new firebase.GoogleAuthProvider();
     provider.setCustomParameters({ prompt: 'select_account' });
+    const useRedirect = /iPhone|iPad|iPod/i.test(navigator.userAgent) || window.matchMedia('(display-mode: standalone)').matches;
+    if (useRedirect) {
+      setSyncState('syncing', '正在前往 Google 登入');
+      await firebase.signInWithRedirect(firebase.auth, provider);
+      return;
+    }
     await firebase.signInWithPopup(firebase.auth, provider);
   } catch (error) {
-    if (error?.code !== 'auth/popup-closed-by-user') $('#account-error').textContent = '登入沒有完成，請稍後再試一次。';
+    if (error?.code === 'auth/popup-blocked' || error?.code === 'auth/operation-not-supported-in-this-environment') {
+      try {
+        const provider = new firebase.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        await firebase.signInWithRedirect(firebase.auth, provider);
+        return;
+      } catch (_) {}
+    }
+    if (error?.code !== 'auth/popup-closed-by-user') {
+      const messages = {
+        'auth/unauthorized-domain': '這個網站尚未列入 Firebase 的授權網域。',
+        'auth/network-request-failed': '目前無法連線到 Google，請確認網路後再試一次。'
+      };
+      $('#account-error').textContent = messages[error?.code] || `登入沒有完成，請稍後再試一次${error?.code ? `（${error.code}）` : '。'}`;
+    }
   }
 }
 
