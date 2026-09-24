@@ -153,9 +153,9 @@ fieldset legend, form > label, #food-fields label, .form-grid label { display: b
 .type-switch input, .scale-options input { position: absolute; opacity: 0; pointer-events: none; }
 .type-switch label span { min-height: 58px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); border-radius: 8px; color: var(--muted); cursor: pointer; }
 .type-switch input:checked + span { border-color: var(--deep-2); color: var(--deep); background: var(--mint); }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-grid { width: 100%; max-width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .form-grid > label { width: 100%; min-width: 0; }
-.form-grid input[type="date"], .form-grid input[type="time"] { display: block; width: 100% !important; min-width: 0 !important; max-width: 100% !important; -webkit-min-logical-width: 0; }
+.form-grid input[type="date"], .form-grid input[type="time"] { display: block; box-sizing: border-box; width: 100% !important; min-width: 0 !important; max-width: 100% !important; -webkit-min-logical-width: 0; }
 input, textarea { width: 100%; min-width: 0; max-width: 100%; min-height: 46px; margin-top: 7px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--paper); resize: vertical; }
 textarea { min-height: 74px; line-height: 1.45; }
 #food-fields, #hunger-fields, #fullness-fields { margin-top: 6px; margin-bottom: 14px; }
@@ -251,6 +251,7 @@ textarea { min-height: 74px; line-height: 1.45; }
   .timeline-entry { grid-template-columns: 37px 10px minmax(0, 1fr); gap: 11px; min-height: 0; padding-bottom: 14px; }
   .entry-card { padding: 14px; }
   .form-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .form-grid input[type="date"], .form-grid input[type="time"] { width: -webkit-fill-available !important; max-width: -webkit-fill-available !important; inline-size: -webkit-fill-available; -webkit-appearance: none; appearance: none; }
   .sheet { padding-left: 18px; padding-right: 18px; }
   .scale-options { gap: 4px; }
   .scale-options span { min-height: 60px; }
