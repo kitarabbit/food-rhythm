@@ -153,7 +153,7 @@ fieldset legend, form > label, #food-fields label, .form-grid label { display: b
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 input, textarea { width: 100%; min-height: 46px; margin-top: 7px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 6px; color: var(--ink); background: var(--paper); resize: vertical; }
 textarea { min-height: 74px; line-height: 1.45; }
-#food-fields, #hunger-fields, #fullness-fields { margin-top: 6px; }
+#food-fields, #hunger-fields, #fullness-fields { margin-top: 6px; margin-bottom: 6px; }
 .feeling-scale { margin: 0; padding: 0; border: 0; }
 .scale-options { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
 .scale-options span { min-height: 64px; border: 1px solid var(--line); border-radius: 6px; display: grid; place-items: center; align-content: center; gap: 3px; color: var(--muted); cursor: pointer; }
